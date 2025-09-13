@@ -7,38 +7,10 @@ plugins {
     alias(libs.plugins.composeMultiplatform) apply false
     alias(libs.plugins.composeCompiler) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
-    alias(libs.plugins.vanniktechPublish)
+    alias(libs.plugins.vanniktechPublish) apply false
 }
 
-mavenPublishing {
-    publishToMavenCentral( true)
 
-    signAllPublications()
-
-    coordinates(group.toString(), "ac", version.toString())
-
-    pom {
-        name = "Airgo Component"
-        description = "Kotlin-Multiplatform component for Airgo"
-        inceptionYear = "2025"
-        url = "https://github.com/ppoonk/ac"
-        licenses {
-            license {
-                name = "MIT License"
-                url = "https://opensource.org/licenses/MIT"
-                distribution = "repo"
-            }
-        }
-        developers {
-            developer {
-                id = "ppoonk"
-                url = "https://github.com/ppoonk/"
-            }
-        }
-        scm {
-            url = "https://github.com/ppoonk/ac/"
-            connection = "scm:git:git://github.com/ppoonk/ac.git"
-            developerConnection = "scm:git:ssh://git@github.com/ppoonk/ac.git"
-        }
-    }
-}
+//allprojects {
+//    version = "1.0.1"
+//}

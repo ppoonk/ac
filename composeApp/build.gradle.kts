@@ -10,7 +10,10 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.vanniktechPublish)
 }
+group = "io.github.ppoonk"
+version = "1.0.0"
 
 kotlin {
     androidTarget {
@@ -106,7 +109,7 @@ android {
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
-        versionName = "1.0"
+        versionName = project.version.toString()
     }
     packaging {
         resources {
@@ -135,7 +138,42 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "io.github.ppoonk.ac"
-            packageVersion = "1.0.0"
+            packageVersion = project.version.toString()
+        }
+    }
+}
+
+
+mavenPublishing {
+    publishToMavenCentral( true)
+
+    signAllPublications()
+
+    coordinates(group.toString(), "ac", version.toString())
+
+    pom {
+        name = "Airgo Component"
+        description = "Kotlin-Multiplatform component for Airgo"
+        inceptionYear = "2025"
+        url = "https://github.com/ppoonk/ac"
+        licenses {
+            license {
+                name = "MIT License"
+                url = "https://opensource.org/licenses/MIT"
+                distribution = "https://opensource.org/licenses/MIT"
+            }
+        }
+        developers {
+            developer {
+                id = "ppoonk"
+                name = "ppoonk"
+                url = "https://github.com/ppoonk/"
+            }
+        }
+        scm {
+            url = "https://github.com/ppoonk/ac/"
+            connection = "scm:git:git://github.com/ppoonk/ac.git"
+            developerConnection = "scm:git:ssh://git@github.com/ppoonk/ac.git"
         }
     }
 }
