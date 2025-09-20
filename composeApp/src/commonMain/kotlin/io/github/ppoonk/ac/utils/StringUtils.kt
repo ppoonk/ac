@@ -2,16 +2,8 @@ package io.github.ppoonk.ac.utils
 
 import com.benasher44.uuid.uuid4
 
-// StringUtils 对象，提供字符串相关的工具方法
-object StringUtils {
-    /**
-     * 生成一个新的 UUID 字符串
-     *
-     * @return 新的 UUID 字符串
-     */
-    fun newUUID(): String {
-        return uuid4().toString()
-    }
+fun newUUID(): String {
+    return uuid4().toString()
 }
 
 /**

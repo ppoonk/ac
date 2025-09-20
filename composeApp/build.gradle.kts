@@ -13,7 +13,7 @@ plugins {
     alias(libs.plugins.vanniktechPublish)
 }
 group = "io.github.ppoonk"
-version = "1.0.0-alpha01"
+version = "1.0.0"
 
 kotlin {
     androidTarget {
@@ -145,9 +145,12 @@ compose.desktop {
 
 
 mavenPublishing {
-    publishToMavenCentral( true)
+    publishToMavenCentral()
 
-    signAllPublications()
+    // 通过环境变量判断是否需要签名
+    if (System.getenv("CI") != null || System.getenv("GITHUB_ACTIONS") != null) {
+        signAllPublications()
+    }
 
     coordinates(group.toString(), "ac", version.toString())
 

@@ -1,19 +1,19 @@
 package io.github.ppoonk.ac.utils
 
 import co.touchlab.kermit.LogWriter
-import co.touchlab.kermit.Logger
+import co.touchlab.kermit.Logger  as KermitLogger
 import co.touchlab.kermit.Severity
 import co.touchlab.kermit.platformLogWriter
 import kotlinx.datetime.Clock
 
 object Logger {
-    private val logger = Logger
+    private val kermitLogger = KermitLogger
 
     var enable: Boolean = false
     var logWriterForDisplay: Boolean = false
 
     fun setMinSeverity(min: String): Unit {
-        logger.mutableConfig.minSeverity = when (min) {
+        kermitLogger.mutableConfig.minSeverity = when (min) {
             "Error", "error" -> Severity.Error
             "Debug", "debug" -> Severity.Debug
             else -> Severity.Error
@@ -22,19 +22,19 @@ object Logger {
 
     fun debug(tag: String = "", throwable: Throwable? = null, message: () -> String): Unit {
         if (enable) {
-            logger.d(tag, throwable, message)
+            kermitLogger.d(tag, throwable, message)
         }
     }
 
     fun error(tag: String = "", throwable: Throwable? = null, message: () -> String): Unit {
         if (enable) {
-            logger.e(tag, throwable, message)
+            kermitLogger.e(tag, throwable, message)
         }
     }
 
     fun addLogWriterForDisplay(callback: (String) -> Unit = {}): Unit {
         logWriterForDisplay = true
-        logger.addLogWriter(object : LogWriter() {
+        kermitLogger.addLogWriter(object : LogWriter() {
             override fun log(
                 severity: Severity,
                 message: String,
@@ -48,7 +48,7 @@ object Logger {
 
     fun defaultLogWriter(): Unit {
         logWriterForDisplay = false
-        logger.setLogWriters(platformLogWriter())
+        kermitLogger.setLogWriters(platformLogWriter())
     }
 
     // tag

@@ -41,9 +41,9 @@ import kotlinx.serialization.json.longOrNull
 val myJson = Json {
     explicitNulls = false // 不序列化 null 值
     ignoreUnknownKeys = true // 忽略未知字段
-    prettyPrint = true // 格式化输出
-    isLenient = true // 宽松模式
+    prettyPrint = false // 生产环境不需要格式化输出
     encodeDefaults = true // 强制序列化默认值
+//    isLenient = true // 宽松模式
 }
 
 /**
@@ -64,6 +64,7 @@ class KtorHttpClient(baseUrl: String) {
         // 配置超时
         install(HttpTimeout) {
             requestTimeoutMillis = 15_000 // 请求超时时间
+            connectTimeoutMillis = 10_000 // 连接超时时间
         }
         // 启用默认验证
         expectSuccess = true
@@ -91,7 +92,7 @@ data class MyResponse<out T>(
 )
 
 /**
- * 将数据类转换为查询参数 Map。注意；未处理嵌套数据类
+ * 将数据类转换为查询参数 Map
  * @param T 泛型数据类型
  * @return 查询参数 Map
  */
@@ -108,15 +109,15 @@ fun JsonObject.toSafeMap(): Map<String, Any?> = this.mapValues { (_, value) ->
         is JsonPrimitive -> {
             when {
                 value.isString -> value.content.trim('\"')
-                value.booleanOrNull != null -> value.boolean
-                value.intOrNull != null -> value.int
-                value.longOrNull != null -> value.long
-                value.doubleOrNull != null -> value.double
-                else -> error("Unsupported JsonPrimitive type: ${value}")
+                value.booleanOrNull != null -> value.booleanOrNull
+                value.intOrNull != null -> value.intOrNull
+                value.longOrNull != null -> value.longOrNull
+                value.doubleOrNull != null -> value.doubleOrNull
+                else -> value.content
             }
         }
 
-        is JsonArray -> value.map { it.toSafeValue() }.toList() // 明确返回 List<Any?>
+        is JsonArray -> value.map { it.toSafeValue() } // 明确返回 List<Any?>
         is JsonObject -> value.toSafeMap()
 
         else -> null
@@ -124,10 +125,18 @@ fun JsonObject.toSafeMap(): Map<String, Any?> = this.mapValues { (_, value) ->
 }
 
 fun JsonElement.toSafeValue(): Any? = when (this) {
-    is JsonPrimitive -> content
-    is JsonArray -> map { it.toSafeValue() }.toList()
+    is JsonPrimitive -> {
+        when {
+            isString -> content
+            booleanOrNull != null -> booleanOrNull
+            intOrNull != null -> intOrNull
+            longOrNull != null -> longOrNull
+            doubleOrNull != null -> doubleOrNull
+            else -> content
+        }
+    }
+    is JsonArray -> map { it.toSafeValue() }
     is JsonObject -> toSafeMap()
-    else -> null
 }
 
 /**
@@ -259,10 +268,16 @@ class ApiHttpClient(
                         params?.toQueryParams()?.forEach { (key, value) ->
                             when (value) {
                                 null -> return@forEach // 忽略 null 值
-                                else -> parameter(key, value) // 添加查询参数
+                                is List<*> -> {
+                                    value.forEach { item ->
+                                        parameter(key, item.toString())
+                                    }
+                                }
+                                else -> parameter(key, value)
                             }
                         }
                     }
+                    else -> { } // 对于 POST, PUT 等方法，参数已经在 body 中处理
                 }
             }
 
@@ -273,6 +288,7 @@ class ApiHttpClient(
                         setBody(params) // 设置请求体
                     }
                 }
+                else -> {}         // GET, DELETE 等方法不需要设置 body
             }
         }
     }
