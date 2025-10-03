@@ -6,6 +6,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.UtcOffset
 import kotlinx.datetime.format
+import kotlinx.datetime.format.DateTimeFormat
 import kotlinx.datetime.format.char
 import kotlinx.datetime.offsetAt
 import kotlinx.datetime.toLocalDateTime
@@ -39,11 +40,12 @@ object TimeUtils {
         return currentMoment.toLocalDateTime(TimeZone.currentSystemDefault()) // 转化为本地时间
     }
 
+
     /**
-     * 将时间戳转化为不含偏移量的 UTC 时间
+     * 将时间戳转换为UTC时间(去除时区偏移)
      *
      * @param timestamp 时间戳（毫秒）
-     * @return 转化后的 UTC 时间
+     * @return Instant UTC时间(无时区偏移)
      */
     fun timestampToUTCNoOffset(timestamp: Long): Instant {
         val ins = Instant.fromEpochMilliseconds(timestamp) // 将时间戳转化为 Instant
@@ -51,35 +53,37 @@ object TimeUtils {
         return ins.plus(-d) // 减去偏移量，得到不含偏移量的 UTC 时间
     }
 
+
     /**
-     * 将时区偏移量转化为 Duration
+     * 将UtcOffset时区偏移量转换为Duration时间间隔
      *
-     * @param offset 时区偏移量
-     * @return 转化后的 Duration
+     * @param offset UtcOffset 时区偏移量
+     * @return Duration 对应的时间间隔
      */
     private fun offsetToDuration(offset: UtcOffset): Duration {
         return offset.totalSeconds.toDuration(DurationUnit.SECONDS) // 转化为 Duration
     }
 
     /**
-     * 将 Instant 转化为本地日期字符串
+     * 将Instant时间点转换为本地日期字符串(仅包含年月日)
      *
      * @param instant 时间点
-     * @return 本地日期字符串
+     * @return String 格式为 YYYY-MM-DD 的日期字符串
      */
-    fun instantToLocalDateString(instant: Instant): String {
+    fun toLocalDateString(instant: Instant): String {
         return instant.toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
     }
 
     /**
-     * 将 Instant 转化为本地日期时间字符串
+     * 将Instant时间点转换为格式化的本地日期时间字符串
      *
      * @param instant 时间点
-     * @return 本地日期时间字符串
+     * @param formatter 日期时间格式化器，默认使用 yyyy/MM/dd HH:mm:ss 格式
+     * @return String 格式化的本地日期时间字符串
      */
-    fun instantToLocalString(instant: Instant): String {
+    fun toLocalDateFormattedString(instant: Instant,formatter: DateTimeFormat<LocalDateTime> = localDateTimeFormatter): String {
         return instant.toLocalDateTime(TimeZone.currentSystemDefault()).format(
-            localDateTimeFormatter // 使用定义的格式化器
+            formatter // 使用定义的格式化器
         )
     }
 }

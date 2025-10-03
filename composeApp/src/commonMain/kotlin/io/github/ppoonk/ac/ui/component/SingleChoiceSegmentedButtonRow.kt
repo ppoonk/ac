@@ -15,8 +15,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun ACSingleChoiceSegmentedButtonRow(
-    selected: String,
+fun ACSingleChoiceRow(
+    selected: Int,
     list: List<SegmentedButtonItem>,
     modifier: Modifier = Modifier,
     space: Dp = SegmentedButtonDefaults.BorderWidth,
@@ -37,7 +37,7 @@ fun ACSingleChoiceSegmentedButtonRow(
                     list.size - 1 -> RoundedCornerShape(topEnd = 12.dp, bottomEnd = 12.dp)
                     else -> RectangleShape
                 },
-                colors=SegmentedButtonDefaults.colors().copy(
+                colors = SegmentedButtonDefaults.colors().copy(
                     activeContainerColor = MaterialTheme.colorScheme.primary,
                     activeContentColor = MaterialTheme.colorScheme.onPrimary,
                     inactiveContainerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -47,7 +47,7 @@ fun ACSingleChoiceSegmentedButtonRow(
                 onClick = {
                     segmentedButtonItem.onClick()
                 },
-                selected = segmentedButtonItem.label == selected,
+                selected = index == selected,
                 label = {
                     Text(
                         segmentedButtonItem.label,
@@ -61,6 +61,7 @@ fun ACSingleChoiceSegmentedButtonRow(
 
 
 data class SegmentedButtonItem(
+    val index: Int,
     val label: String,
     val onClick: () -> Unit,
 )

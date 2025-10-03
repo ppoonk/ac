@@ -1,24 +1,23 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
-    alias(libs.plugins.composeHotReload)
+//    alias(libs.plugins.composeHotReload)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.vanniktechPublish)
 }
 group = "io.github.ppoonk"
-version = "1.0.0"
+version = "1.0.1"
 
 kotlin {
     androidTarget {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
+            jvmTarget.set(JvmTarget.JVM_21)
         }
     }
     
@@ -88,6 +87,8 @@ kotlin {
             // 富文本
             implementation(libs.richeditor.compose)
             implementation(libs.richeditor.compose.coil3)
+            // 响应式
+            implementation(libs.adaptive)
 
         }
         commonTest.dependencies {
@@ -122,8 +123,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 }
 
@@ -140,6 +141,11 @@ compose.desktop {
             packageName = "io.github.ppoonk.ac"
             packageVersion = project.version.toString()
         }
+    }
+}
+publishing {
+    repositories {
+        mavenLocal()
     }
 }
 
@@ -161,9 +167,9 @@ mavenPublishing {
         url = "https://github.com/ppoonk/ac"
         licenses {
             license {
-                name = "MIT License"
-                url = "https://opensource.org/licenses/MIT"
-                distribution = "https://opensource.org/licenses/MIT"
+                name = "GNU General Public License v3.0"
+                url = "https://www.gnu.org/licenses/gpl-3.0.html"
+                distribution = "https://www.gnu.org/licenses/gpl-3.0.html"
             }
         }
         developers {

@@ -2,8 +2,10 @@ package io.github.ppoonk.ac.utils
 
 import com.benasher44.uuid.uuid4
 
-fun newUUID(): String {
-    return uuid4().toString()
+object StringUtils {
+    fun newUUID(): String {
+        return uuid4().toString()
+    }
 }
 
 /**

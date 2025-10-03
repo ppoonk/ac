@@ -26,13 +26,9 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.booleanOrNull
-import kotlinx.serialization.json.double
 import kotlinx.serialization.json.doubleOrNull
-import kotlinx.serialization.json.int
 import kotlinx.serialization.json.intOrNull
-import kotlinx.serialization.json.long
 import kotlinx.serialization.json.longOrNull
 
 /**
@@ -85,7 +81,7 @@ interface ApiConfig {
  * @param T 泛型数据类型
  */
 @Serializable
-data class MyResponse<out T>(
+data class Response<out T>(
     val code: Int, // 响应状态码
     val message: String, // 响应消息
     val data: T? // 响应数据
@@ -142,19 +138,19 @@ fun JsonElement.toSafeValue(): Any? = when (this) {
 /**
  * 包装响应结果
  */
-sealed class MyResult<out T> {
+sealed class Result<out T> {
     data class Success<T>(val code: Int, val message: String, val data: T? = null) :
-        MyResult<T>() // 成功结果
+        Result<T>() // 成功结果
 
-    data class Error(val code: Int? = null, val message: String) : MyResult<Nothing>() // 错误结果
+    data class Error(val code: Int? = null, val message: String) : Result<Nothing>() // 错误结果
 }
 
 /**
  * 链式处理扩展函数，处理成功结果
  * @param callback 成功回调
  */
-fun <T> MyResult<T>.onSuccess(callback: (MyResult.Success<T>) -> Unit): MyResult<T> {
-    if (this is MyResult.Success) {
+fun <T> Result<T>.onSuccess(callback: (Result.Success<T>) -> Unit): Result<T> {
+    if (this is Result.Success) {
         callback(this)
     }
     return this
@@ -164,8 +160,8 @@ fun <T> MyResult<T>.onSuccess(callback: (MyResult.Success<T>) -> Unit): MyResult
  * 链式处理扩展函数，处理失败结果
  * @param callback 失败回调
  */
-fun <T> MyResult<T>.onFailure(callback: (MyResult.Error) -> Unit): MyResult<T> {
-    if (this is MyResult.Error) {
+fun <T> Result<T>.onFailure(callback: (Result.Error) -> Unit): Result<T> {
+    if (this is Result.Error) {
         callback(this)
     }
     return this
@@ -197,25 +193,25 @@ class ApiHttpClient(
     suspend inline fun <reified T : Any, reified R : Any> request(
         config: ApiConfig,
         params: T?,
-    ): MyResult<R> {
+    ): Result<R> {
         onLog("Request params：${params}") // 打印请求参数
         try {
             val httpRes = doRequest(config, params) // 发起请求
             val str: String = httpRes.body() // 获取响应字符串
             onLog("Response string：${str}") // 打印响应字符串
-            val myResponse = httpRes.body<MyResponse<R>>() // 反序列化响应
-            return when (myResponse.code) {
-                0 -> MyResult.Success(myResponse.code, myResponse.message, myResponse.data) // 成功结果
+            val resp = httpRes.body<Response<R>>() // 反序列化响应
+            return when (resp.code) {
+                0 -> Result.Success(resp.code, resp.message, resp.data) // 成功结果
                 else -> {
-                    onLog("Business logic error, status:${myResponse.code}, ${myResponse.message}")
-                    MyResult.Error(myResponse.code, myResponse.message) // 业务逻辑错误
+                    onLog("Business logic error, status:${resp.code}, ${resp.message}")
+                    Result.Error(resp.code, resp.message) // 业务逻辑错误
                 }
             }
         } catch (e: Exception) {
             return when (e) {
                 is ClientRequestException -> {
                     onLog("Client error, status:${e.response.status.value}, ${e.message}")
-                    MyResult.Error(
+                    Result.Error(
                         e.response.status.value,
                         "Client error, status:${e.response.status.value}, ${e.message}"
                     )
@@ -223,7 +219,7 @@ class ApiHttpClient(
 
                 is ServerResponseException -> {
                     onLog("Server error, status:${e.response.status.value}, ${e.message}")
-                    MyResult.Error(
+                    Result.Error(
                         e.response.status.value,
                         "Server error, status:${e.response.status.value}, ${e.message}"
                     )
@@ -231,17 +227,17 @@ class ApiHttpClient(
 
                 is kotlinx.io.IOException -> {
                     onLog("Network connection failed, ${e.message}")
-                    MyResult.Error(message = "Network connection failed, ${e.message}")
+                    Result.Error(message = "Network connection failed, ${e.message}")
                 }
 
                 is SerializationException -> {
                     onLog("Data parsing failed, ${e.message}")
-                    MyResult.Error(message = "Data parsing failed, ${e.message}")
+                    Result.Error(message = "Data parsing failed, ${e.message}")
                 }
 
                 else -> {
                     onLog("unknown error, ${e.message}")
-                    MyResult.Error(message = "unknown error, ${e.message},${e.cause}")
+                    Result.Error(message = "unknown error, ${e.message},${e.cause}")
                 }
             }
         }
