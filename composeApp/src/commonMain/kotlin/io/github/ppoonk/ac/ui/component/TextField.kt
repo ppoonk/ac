@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 
@@ -55,13 +56,12 @@ fun ACTextField(
     visualTransformation: VisualTransformation = VisualTransformation.None,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
-//    singleLine: Boolean = false,
-    singleLine: Boolean = true,
+    singleLine: Boolean = false,
     maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE,
     minLines: Int = 1,
     interactionSource: MutableInteractionSource? = null,
 //    shape: Shape = OutlinedTextFieldDefaults.shape,
-    shape: Shape = RoundedCornerShape(9.dp),
+    shape: Shape = RoundedCornerShape(8.dp),
     colors: TextFieldColors = OutlinedTextFieldDefaults.colors(),
 
     contentPadding: PaddingValues = PaddingValues(
@@ -79,7 +79,7 @@ fun ACTextField(
         readOnly = readOnly,
         textStyle = textStyle,
 //        cursorBrush = SolidColor(colors.cursorColor(isError)),
-        visualTransformation = visualTransformation,
+        visualTransformation = ACVisualTransformation(),
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,
         interactionSource = interactionSource,
@@ -87,34 +87,42 @@ fun ACTextField(
         maxLines = maxLines,
         minLines = minLines,
         decorationBox =
-        @Composable { innerTextField ->
-            OutlinedTextFieldDefaults.DecorationBox(
-                value = value,
-                visualTransformation = visualTransformation,
-                innerTextField = innerTextField,
-                placeholder = placeholder,
-                label = label,
-                leadingIcon = leadingIcon,
-                trailingIcon = trailingIcon,
-                prefix = prefix,
-                suffix = suffix,
-                supportingText = supportingText,
-                singleLine = singleLine,
-                enabled = enabled,
-                isError = isError,
-                interactionSource = interactionSource,
-                colors = colors,
-                contentPadding = contentPadding,
-                container = {
-                    OutlinedTextFieldDefaults.Container(
-                        enabled = enabled,
-                        isError = isError,
-                        interactionSource = interactionSource,
-                        colors = colors,
-                        shape = shape,
-                    )
-                }
-            )
-        }
+            @Composable { innerTextField ->
+                OutlinedTextFieldDefaults.DecorationBox(
+                    value = value,
+                    visualTransformation = visualTransformation,
+                    innerTextField = innerTextField,
+                    placeholder = placeholder,
+                    label = label,
+                    leadingIcon = leadingIcon,
+                    trailingIcon = trailingIcon,
+                    prefix = prefix,
+                    suffix = suffix,
+                    supportingText = supportingText,
+                    singleLine = singleLine,
+                    enabled = enabled,
+                    isError = isError,
+                    interactionSource = interactionSource,
+                    colors = colors,
+                    contentPadding = contentPadding,
+                    container = {
+                        OutlinedTextFieldDefaults.Container(
+                            enabled = enabled,
+                            isError = isError,
+                            interactionSource = interactionSource,
+                            colors = colors,
+                            shape = shape,
+                        )
+                    }
+                )
+            }
     )
+}
+
+fun ACVisualTransformation(isPasswd: Boolean = false): VisualTransformation {
+    return if (isPasswd) {
+        PasswordVisualTransformation()
+    } else {
+        VisualTransformation.None
+    }
 }

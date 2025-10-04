@@ -12,7 +12,7 @@ plugins {
     alias(libs.plugins.vanniktechPublish)
 }
 group = "io.github.ppoonk"
-version = "1.0.1"
+version = "1.0.2"
 
 kotlin {
     androidTarget {

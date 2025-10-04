@@ -57,4 +57,5 @@ object Logger {
     const val API_HTTP_CLIENT = "API_HTTP_CLIENT"
     const val JSON = "JSON"
     const val COMPOSE_UI = "COMPOSE_UI"
+    const val VIEW_MODEL = "VIEW_MODEL"
 }
