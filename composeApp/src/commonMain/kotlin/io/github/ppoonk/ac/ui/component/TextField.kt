@@ -15,8 +15,10 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -63,7 +65,7 @@ fun ACTextField(
 //    shape: Shape = OutlinedTextFieldDefaults.shape,
     shape: Shape = RoundedCornerShape(8.dp),
     colors: TextFieldColors = OutlinedTextFieldDefaults.colors(),
-
+    cursorBrush: Brush = SolidColor(colors.cursorColor),
     contentPadding: PaddingValues = PaddingValues(
         horizontal = 10.dp, vertical = 5.dp
     ),
@@ -78,8 +80,8 @@ fun ACTextField(
         enabled = enabled,
         readOnly = readOnly,
         textStyle = textStyle,
-//        cursorBrush = SolidColor(colors.cursorColor(isError)),
-        visualTransformation = ACVisualTransformation(),
+        cursorBrush = cursorBrush,
+        visualTransformation = visualTransformation,
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,
         interactionSource = interactionSource,
@@ -117,12 +119,4 @@ fun ACTextField(
                 )
             }
     )
-}
-
-fun ACVisualTransformation(isPasswd: Boolean = false): VisualTransformation {
-    return if (isPasswd) {
-        PasswordVisualTransformation()
-    } else {
-        VisualTransformation.None
-    }
 }

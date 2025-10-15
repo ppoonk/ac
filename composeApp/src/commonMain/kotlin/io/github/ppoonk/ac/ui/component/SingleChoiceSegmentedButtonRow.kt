@@ -26,15 +26,11 @@ fun ACSingleChoiceRow(
         modifier = modifier,
         space = space,
     ) {
-        list.forEachIndexed { index, segmentedButtonItem ->
+        list.forEachIndexed { index, item ->
             SegmentedButton(
                 shape = when (index) {
-                    0 -> RoundedCornerShape(
-                        topStart = 12.dp,
-                        bottomStart = 12.dp
-                    )
-
-                    list.size - 1 -> RoundedCornerShape(topEnd = 12.dp, bottomEnd = 12.dp)
+                    0 -> RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp)
+                    list.size - 1 -> RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp)
                     else -> RectangleShape
                 },
                 colors = SegmentedButtonDefaults.colors().copy(
@@ -45,12 +41,12 @@ fun ACSingleChoiceRow(
                 ),
                 border = BorderStroke(0.dp, Color.Transparent),
                 onClick = {
-                    segmentedButtonItem.onClick()
+                    item.onClick()
                 },
                 selected = index == selected,
                 label = {
                     Text(
-                        segmentedButtonItem.label,
+                        item.label,
                         style = MaterialTheme.typography.labelMedium
                     )
                 }
@@ -61,7 +57,6 @@ fun ACSingleChoiceRow(
 
 
 data class SegmentedButtonItem(
-    val index: Int,
     val label: String,
     val onClick: () -> Unit,
 )

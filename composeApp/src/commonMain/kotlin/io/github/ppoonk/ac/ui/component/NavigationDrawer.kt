@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.material3.DrawerState
@@ -23,7 +24,6 @@ import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,9 +33,10 @@ import kotlinx.coroutines.launch
 
 
 abstract class ACDestination {
-    abstract val icon: ImageVector
-    abstract val title: String
+    abstract val icon: ImageVector?
+    abstract val title: String?
     abstract val content: @Composable () -> Unit
+
 }
 
 
@@ -50,28 +51,24 @@ fun ACNavigationDrawer(
     drawerState: DrawerState,
     pageState: PagerState,
     destinations: List<ACDestination>,
-    selectedItem: MutableState<ACDestination>,
     topContent: @Composable (() -> Unit),
     bottomContent: @Composable (() -> Unit),
 
-): Unit {
+    ): Unit {
     AutoSizeFade(
         compact = {
             Compact(
                 drawerState,
                 pageState,
                 destinations,
-                selectedItem,
                 topContent,
                 bottomContent
             )
         },
         medium = {
             Medium(
-                drawerState,
                 pageState,
                 destinations,
-                selectedItem,
                 topContent,
                 bottomContent
             )
@@ -80,7 +77,6 @@ fun ACNavigationDrawer(
             Expanded(
                 pageState,
                 destinations,
-                selectedItem,
                 topContent,
                 bottomContent
             )
@@ -95,7 +91,6 @@ private fun Compact(
     drawerState: DrawerState,
     pageState: PagerState,
     destinations: List<ACDestination>,
-    selectedItem: MutableState<ACDestination>,
     topContent: @Composable (() -> Unit),
     bottomContent: @Composable (() -> Unit),
 ): Unit {
@@ -107,7 +102,6 @@ private fun Compact(
                 drawerState,
                 pageState,
                 destinations,
-                selectedItem,
                 topContent,
                 bottomContent
             )
@@ -124,7 +118,6 @@ private fun CompactDrawerContent(
     drawerState: DrawerState,
     pageState: PagerState,
     destinations: List<ACDestination>,
-    selectedItem: MutableState<ACDestination>,
     topContent: @Composable (() -> Unit),
     bottomContent: @Composable (() -> Unit),
 ): Unit {
@@ -144,13 +137,12 @@ private fun CompactDrawerContent(
             // menu
             itemsIndexed(destinations) { index, d ->
                 NavigationDrawerItem(
-                    icon = { ACIconSmall(d.icon, contentDescription = null) },
-                    label = { Text(d.title) },
-                    selected = d == selectedItem.value,
+                    icon = { d.icon?.let { ACIconSmall(it, contentDescription = null) } },
+                    label = { d.title?.let { Text(it) } },
+                    selected = index == pageState.currentPage,
                     onClick = {
                         scope.launch {
                             // 关闭抽屉
-                            selectedItem.value = d
                             drawerState.close()
                             // 跳转页面
                             pageState.animateScrollToPage(
@@ -170,10 +162,8 @@ private fun CompactDrawerContent(
 
 @Composable
 private fun Medium(
-    drawerState: DrawerState,
     pageState: PagerState,
     destinations: List<ACDestination>,
-    selectedItem: MutableState<ACDestination>,
     topContent: @Composable (() -> Unit),
     bottomContent: @Composable (() -> Unit),
 ): Unit {
@@ -185,16 +175,10 @@ private fun Medium(
             // menu
             destinations.forEachIndexed { index, d ->
                 NavigationRailItem(
-                    icon = {
-                        ACIconSmall(
-                            d.icon,
-                            contentDescription = d.title
-                        )
-                    },
-                    label = { Text(d.title) },
-                    selected = d == selectedItem.value,
+                    icon = { d.icon?.let { ACIconSmall(it, contentDescription = null) } },
+                    label = { d.title?.let { Text(it) } },
+                    selected = d == destinations[pageState.currentPage],
                     onClick = {
-                        selectedItem.value = d
                         scope.launch {
                             pageState.animateScrollToPage(
                                 page = index,
@@ -224,7 +208,6 @@ private fun Medium(
 private fun Expanded(
     pageState: PagerState,
     destinations: List<ACDestination>,
-    selectedItem: MutableState<ACDestination>,
     topContent: @Composable (() -> Unit),
     bottomContent: @Composable (() -> Unit),
 ): Unit {
@@ -240,17 +223,13 @@ private fun Expanded(
                             horizontalArrangement = Arrangement.Center,
 
                             ) {
-                            ACIconSmall(
-                                d.icon,
-                                contentDescription = d.title
-                            )
+                            d.icon?.let { ACIconSmall(it, contentDescription = d.title) }
                             Spacer(Modifier.width(16.dp))
-                            Text(d.title)
+                            d.title?.let { Text(it) }
                         }
                     },
-                    selected = d == selectedItem.value,
+                    selected = d == destinations[pageState.currentPage],
                     onClick = {
-                        selectedItem.value = d
                         scope.launch {
                             pageState.animateScrollToPage(
                                 page = index,
@@ -264,7 +243,7 @@ private fun Expanded(
             bottomContent()
         }
         // 主内容区域
-        VerticalPager(
+        HorizontalPager(
             state = pageState,
             userScrollEnabled = false,
             modifier = Modifier.weight(1f)

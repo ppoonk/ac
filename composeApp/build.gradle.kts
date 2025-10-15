@@ -186,3 +186,9 @@ mavenPublishing {
         }
     }
 }
+// 静态资源
+compose.resources {
+    publicResClass = true // 设为公共类（默认 internal）
+    packageOfResClass = "io.github.ppoonk.ac" // 指定包名
+    generateResClass = auto // 自动生成资源类
+}

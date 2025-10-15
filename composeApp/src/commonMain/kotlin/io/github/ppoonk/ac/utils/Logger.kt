@@ -9,8 +9,15 @@ import kotlinx.datetime.Clock
 object Logger {
     private val kermitLogger = KermitLogger
 
-    var enable: Boolean = false
-    var logWriterForDisplay: Boolean = false
+    private var enable: Boolean = false
+    fun enable(v: Boolean): Unit {
+        enable = v
+    }
+
+    private var logWriterForDisplay: Boolean = false
+    fun logWriterForDisplay(v: Boolean): Unit {
+        logWriterForDisplay = v
+    }
 
     fun setMinSeverity(min: String): Unit {
         kermitLogger.mutableConfig.minSeverity = when (min) {
@@ -20,20 +27,8 @@ object Logger {
         }
     }
 
-    fun debug(tag: String = "", throwable: Throwable? = null, message: () -> String): Unit {
-        if (enable) {
-            kermitLogger.d(tag, throwable, message)
-        }
-    }
-
-    fun error(tag: String = "", throwable: Throwable? = null, message: () -> String): Unit {
-        if (enable) {
-            kermitLogger.e(tag, throwable, message)
-        }
-    }
-
     fun addLogWriterForDisplay(callback: (String) -> Unit = {}): Unit {
-        logWriterForDisplay = true
+        logWriterForDisplay(true)
         kermitLogger.addLogWriter(object : LogWriter() {
             override fun log(
                 severity: Severity,
@@ -47,8 +42,20 @@ object Logger {
     }
 
     fun defaultLogWriter(): Unit {
-        logWriterForDisplay = false
+        logWriterForDisplay(false)
         kermitLogger.setLogWriters(platformLogWriter())
+    }
+
+    fun debug(tag: String = "", throwable: Throwable? = null, message: () -> String): Unit {
+        if (enable) {
+            kermitLogger.d(tag, throwable, message)
+        }
+    }
+
+    fun error(tag: String = "", throwable: Throwable? = null, message: () -> String): Unit {
+        if (enable) {
+            kermitLogger.e(tag, throwable, message)
+        }
     }
 
     // tag

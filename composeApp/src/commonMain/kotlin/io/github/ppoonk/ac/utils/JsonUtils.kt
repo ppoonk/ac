@@ -8,56 +8,118 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 
-
 /**
- * 比较两个对象的差异，返回仅包含变化字段的对象
+ * 比较两个对象的字段值（支持嵌套数据类），生成一个仅包含不同字段的新对象
+ *
+ * @param old 原始对象
+ * @param new 修改后的对象
+ * @param excludeFields 需要排除的字段列表，这些字段将维持原值
+ * @return 包含不同字段的新对象（相同字段为默认值/null），类型与输入对象相同
  */
-inline fun <reified T : Any> diff(old: T, new: T): T? {
-    val oldJson = Json.encodeToJsonElement(old).jsonObject
-    val newJson = Json.encodeToJsonElement(new).jsonObject
-    val diff = calculateDiff(oldJson, newJson)
+inline fun <reified T : Any> diffObject(
+    old: T,
+    new: T,
+    excludeFields: List<String> = emptyList()
+): T? {
+    // 增加判断，如果old==new，直接返回null
+    if (old == new) {
+        return null
+    }
 
-    return if (diff.isEmpty()) null
-    else Json.decodeFromJsonElement(JsonObject(diff))
+    val jsonOld = Json.encodeToJsonElement(old).jsonObject
+    val jsonNew = Json.encodeToJsonElement(new).jsonObject
+
+    val diffResult = deepDiff(jsonOld, jsonNew, excludeFields)
+    return Json.decodeFromJsonElement(diffResult)
 }
 
+
 /**
- * 计算两个 JsonObject 的差异
+ * 递归比较两个 JsonObject，返回差异字段（相同字段设为 JsonNull）
+ *
+ * @param oldObj 旧对象
+ * @param newObj 新对象
+ * @param excludeFields 需要排除的字段列表
  */
-fun calculateDiff(old: JsonObject, new: JsonObject): Map<String, JsonElement> {
+fun deepDiff(
+    oldObj: JsonObject,
+    newObj: JsonObject,
+    excludeFields: List<String> = emptyList()
+): JsonObject {
     val result = mutableMapOf<String, JsonElement>()
 
-    // 找出所有可能的键
-    val allKeys = (old.keys + new.keys).toSet()
+    // 处理所有新对象中的字段
+    newObj.forEach { (key, newValue) ->
+        // 如果字段在排除列表中，跳过处理
+        if (excludeFields.contains(key)) {
+            oldObj[key]?.let { oldValue ->
+                result[key] = oldValue
+            }
+            return@forEach
+        }
 
-    for (key in allKeys) {
-        val oldValue = old[key]
-        val newValue = new[key]
+        val oldValue = oldObj[key]
 
-        when {
-            // 新增字段
-            oldValue == null && newValue != null -> {
-                result[key] = newValue
-            }
-            // 删除字段（根据需求决定是否需要处理）
-            oldValue != null && newValue == null -> {
-                result[key] = JsonNull
-            }
-            // 修改字段
-            oldValue != null && newValue != null && oldValue != newValue -> {
-                when {
-                    oldValue is JsonObject && newValue is JsonObject -> {
-                        val nestedDiff = calculateDiff(oldValue, newValue)
-                        if (nestedDiff.isNotEmpty()) {
-                            result[key] = JsonObject(nestedDiff)
-                        }
-                    }
-                    else -> result[key] = newValue
-                }
-            }
-            // 相同字段不需要包含在结果中
+        val diffValue = when {
+            // 字段不存在于旧对象 → 直接保留新值
+            oldValue == null -> newValue
+            // 字段值相同 → 设为 JsonNull
+            oldValue == newValue -> JsonNull
+            // 嵌套对象 → 递归比较
+            oldValue is JsonObject && newValue is JsonObject -> deepDiff(
+                oldValue,
+                newValue,
+                excludeFields
+            )
+            // 其他情况 → 保留新值
+            else -> newValue
+        }
+
+        // 只添加非 JsonNull 的字段到结果中
+        if (diffValue != JsonNull) {
+            result[key] = diffValue
         }
     }
 
-    return result
+    return JsonObject(result)
+}
+
+
+/**
+ * 合并两个对象，将旧对象的字段更新为新对象中的值
+ *
+ * @param old 旧对象
+ * @param new 新对象
+ * @return 合并后的新对象，包含旧对象的所有字段，其中新对象中存在差异的字段会被更新
+ */
+inline fun <reified T : Any, reified N : Any> mergeObject(old: T, new: N): T {
+    val jsonOld = Json.encodeToJsonElement(old).jsonObject
+    val jsonNew = Json.encodeToJsonElement(new).jsonObject
+
+    val mergedResult = deepMerge(jsonOld, jsonNew)
+    return Json.decodeFromJsonElement(mergedResult)
+}
+
+/**
+ * 递归合并两个 JsonObject，将旧对象的字段用新对象的值更新
+ */
+fun deepMerge(oldObj: JsonObject, newObj: JsonObject): JsonObject {
+    val result = oldObj.toMutableMap()
+
+    newObj.forEach { (key, newValue) ->
+        val oldValue = oldObj[key]
+
+        val mergedValue = when {
+            // 如果旧对象中没有该字段，直接使用新值
+            oldValue == null -> newValue
+            // 如果都是 JsonObject，递归合并
+            oldValue is JsonObject && newValue is JsonObject -> deepMerge(oldValue, newValue)
+            // 其他情况，使用新值
+            else -> newValue
+        }
+
+        result[key] = mergedValue
+    }
+
+    return JsonObject(result)
 }

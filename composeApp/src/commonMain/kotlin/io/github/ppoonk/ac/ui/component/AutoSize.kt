@@ -18,16 +18,15 @@ import androidx.window.core.layout.WindowSizeClass
 enum class WindowSize { Compact, Medium, Expanded }
 
 @Composable
-private fun AutoSize(
-    size: WindowSize,
-    compact: @Composable () -> Unit = {},
-    medium: @Composable () -> Unit = {},
-    expanded: @Composable () -> Unit = {}
-): Unit {
-    when (size) {
-        WindowSize.Compact -> compact()
-        WindowSize.Medium -> medium()
-        WindowSize.Expanded -> expanded()
+private fun AutoSize(): WindowSize {
+    val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
+    return when {
+        // 扩展宽度（如平板横屏、桌面端）
+        windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND) -> WindowSize.Expanded
+        // 中等宽度（如平板竖屏、大屏手机横屏）
+        windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND) -> WindowSize.Medium
+        // 紧凑宽度（如手机竖屏）：单列布局
+        else -> WindowSize.Compact
     }
 }
 
@@ -37,21 +36,15 @@ fun AutoSizeFade(
     medium: @Composable () -> Unit = {},
     expanded: @Composable () -> Unit = {}
 ) {
-    val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
-    val size = when {
-        // 扩展宽度（如平板横屏、桌面端）
-        windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND) -> WindowSize.Expanded
-        // 中等宽度（如平板竖屏、大屏手机横屏）
-        windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND) -> WindowSize.Medium
-        // 紧凑宽度（如手机竖屏）：单列布局
-        else -> WindowSize.Compact
-    }
-
     Crossfade(
-        targetState = size,
+        targetState = AutoSize(),
         animationSpec = tween(durationMillis = 800),
     ) { size ->
-        AutoSize(size, compact, medium, expanded)
+        when (size) {
+            WindowSize.Compact -> compact()
+            WindowSize.Medium -> medium()
+            WindowSize.Expanded -> expanded()
+        }
     }
 }
 
@@ -61,17 +54,8 @@ fun AutoSizeAnimated(
     medium: @Composable () -> Unit = {},
     expanded: @Composable () -> Unit = {}
 ) {
-    val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
-    val size = when {
-        // 扩展宽度（如平板横屏、桌面端）
-        windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND) -> WindowSize.Expanded
-        // 中等宽度（如平板竖屏、大屏手机横屏）
-        windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND) -> WindowSize.Medium
-        // 紧凑宽度（如手机竖屏）：单列布局
-        else -> WindowSize.Compact
-    }
     AnimatedContent(
-        targetState = size,
+        targetState = AutoSize(),
         transitionSpec = {
             // 滑动进入 + 淡出
             slideInHorizontally(
@@ -79,10 +63,13 @@ fun AutoSizeAnimated(
                 .togetherWith(fadeOut())
         }
     ) { size ->
-        AutoSize(size, compact, medium, expanded)
+        when (size) {
+            WindowSize.Compact -> compact()
+            WindowSize.Medium -> medium()
+            WindowSize.Expanded -> expanded()
+        }
     }
 }
-
 
 
 @OptIn(ExperimentalAnimationApi::class)
