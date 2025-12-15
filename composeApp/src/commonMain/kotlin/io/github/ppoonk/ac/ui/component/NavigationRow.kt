@@ -21,6 +21,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import io.github.ppoonk.ac.utils.Logger
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 
@@ -28,10 +30,10 @@ import kotlinx.coroutines.launch
 fun NavigationRow(
     pageState: PagerState,
     destinations: List<ACDestination>,
+    scope: CoroutineScope = rememberCoroutineScope(),
+    animateScroll: Boolean = true,
     modifier: Modifier = Modifier
-
 ): Unit {
-    val scope = rememberCoroutineScope()
     LazyRow(
         modifier = modifier
     ) {
@@ -44,10 +46,14 @@ fun NavigationRow(
             ) {
                 TextButton(onClick = {
                     scope.launch {
-                        pageState.animateScrollToPage(
-                            page = index,
-                            animationSpec = tween(durationMillis = 500)
-                        )
+                        if (animateScroll) {
+                            pageState.animateScrollToPage(
+                                page = index,
+                                animationSpec = tween(durationMillis = 500)
+                            )
+                        } else {
+                            pageState.scrollToPage(index)
+                        }
                     }
                 }) {
                     Row(

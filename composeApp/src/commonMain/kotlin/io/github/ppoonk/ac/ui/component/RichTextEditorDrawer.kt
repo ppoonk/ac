@@ -43,7 +43,7 @@ enum class ACDrawerRichTextEditorType {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ACDrawerRichTextEditor(
+fun ACRichTextEditorDrawer(
     type: ACDrawerRichTextEditorType = ACDrawerRichTextEditorType.Html,
     text: String = "",
     onSaved: (String) -> Unit = {},
@@ -146,3 +146,4 @@ fun ACDrawerRichTextEditor(
         }
     }
 }
+

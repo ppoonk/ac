@@ -9,12 +9,13 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import kotlin.reflect.KClass
 
 
 @Composable
 fun ACAppRoute(
     navController: NavHostController,
-    startDestination: String,
+    startDestination: Any,
     builder: NavGraphBuilder.() -> Unit
 ): Unit {
     NavHost(

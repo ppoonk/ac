@@ -15,9 +15,9 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
-import io.ktor.http.parameters
-import io.ktor.http.path
+import io.ktor.http.takeFrom
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -43,38 +43,13 @@ val myJson = Json {
 }
 
 /**
- * Ktor HTTP 客户端封装
- * @param baseUrl 基础 URL
+ * API 请求配置
  */
-class KtorHttpClient(baseUrl: String) {
-    val client = HttpClient() {
-        // 配置默认请求参数
-        defaultRequest {
-            if (baseUrl.isNotEmpty()) url(baseUrl) // 设置基础 URL
-            contentType(ContentType.Application.Json) // 默认 Content-Type
-        }
-        // 安装 JSON 序列化插件
-        install(ContentNegotiation) {
-            json(myJson)
-        }
-        // 配置超时
-        install(HttpTimeout) {
-            requestTimeoutMillis = 15_000 // 请求超时时间
-            connectTimeoutMillis = 10_000 // 连接超时时间
-        }
-        // 启用默认验证
-        expectSuccess = true
-    }
-}
-
-/**
- * API 请求配置接口
- */
-interface ApiConfig {
-    val path: String // 请求路径
-    val method: HttpMethod // HTTP 方法
-    val auth: Boolean // 是否需要认证
-}
+data class ApiConfig(
+    val url: String,
+    val method: HttpMethod,
+    val headers: Map<String, String>,
+)
 
 /**
  * 后端返回数据格式
@@ -131,12 +106,13 @@ fun JsonElement.toSafeValue(): Any? = when (this) {
             else -> content
         }
     }
+
     is JsonArray -> map { it.toSafeValue() }
     is JsonObject -> toSafeMap()
 }
 
 /**
- * 包装响应结果
+ * 包装结果
  */
 sealed class Result<out T> {
     data class Success<T>(val code: Int, val message: String, val data: T? = null) :
@@ -168,19 +144,67 @@ fun <T> Result<T>.onFailure(callback: (Result.Error) -> Unit): Result<T> {
 }
 
 /**
- * API HTTP 客户端
- * @param openLoading 开启加载回调
- * @param closeLoading 关闭加载回调
- * @param onLog 日志记录回调
- * @param getApiBaseUrl 获取 API 基础 URL 回调
- * @param getToken 获取认证 Token 回调
+ * API HTTP 客户端封装类
+ *
+ * 提供基于 Ktor 的 HTTP 客户端功能，支持统一的请求/响应处理
+ * 特性包括：
+ * - 自动 JSON 序列化/反序列化
+ * - 统一响应格式处理（code/message/data）
+ * - 请求观察器和响应观察器支持
+ * - 统一异常处理和业务错误处理
+ * - 支持 GET/POST 等常见 HTTP 方法
+ * - 支持查询参数自动转换
+ *
+ * @param requestObserver 请求观察器，在发送请求前执行。
+ *                        返回非空 Result.Error 时会中断请求并直接返回错误。
+ * @param responseObserver 响应观察器，在收到响应后执行，可用于统一处理特定 HTTP 状态码等。
+ *                         返回非空 Result.Error 时会中断后续处理并直接返回错误。
  */
 class ApiHttpClient(
-    val onLog: (String) -> Unit = {},
-    val getApiBaseUrl: () -> String,
-    val getToken: () -> String,
+    val requestObserver: (ApiConfig) -> Result.Error? = { null },
+    val responseObserver: (HttpResponse) -> Result.Error? = { null },
 ) {
-    var httpClient = KtorHttpClient(getApiBaseUrl()) // 初始化 HTTP 客户端
+    val httpClient = HttpClient() {
+        // 配置默认请求参数
+        defaultRequest {
+            contentType(ContentType.Application.Json) // 默认 Content-Type
+            headers {
+                append(HttpHeaders.Accept, "application/json") // 默认 Accept 头
+            }
+        }
+        // 安装 JSON 序列化插件
+        install(ContentNegotiation) {
+            json(myJson)
+        }
+        // 配置超时
+        install(HttpTimeout) {
+            requestTimeoutMillis = 15_000 // 请求超时时间
+            connectTimeoutMillis = 10_000 // 连接超时时间
+        }
+        // 启用默认验证
+        // expectSuccess = true
+
+        // 拦截器
+//        install(ResponseObserver) {
+//            onResponse { response ->
+//                val contentType = response.contentType()
+//                if (contentType?.match(ContentType.Application.Json) == true) {
+//                    try {
+//                        val text = response.bodyAsText()
+//                        val responseObject = myJson.decodeFromString<JsonObject>(text)
+//                        val code = responseObject["code"]?.jsonPrimitive?.intOrNull
+//                        if (code != null) {
+//                            println("Business code: $code")
+//                        }
+//                    } catch (e: Exception) {
+//                        // 解析失败忽略或记录日志
+//                        e.printStackTrace()
+//                    }
+//                }
+//            }
+//        }
+    }
+
 
     /**
      * 发起请求
@@ -194,51 +218,44 @@ class ApiHttpClient(
         config: ApiConfig,
         params: T?,
     ): Result<R> {
-        onLog("Request params：${params}") // 打印请求参数
         try {
-            val httpRes = doRequest(config, params) // 发起请求
-            val str: String = httpRes.body() // 获取响应字符串
-            onLog("Response string：${str}") // 打印响应字符串
-            val resp = httpRes.body<Response<R>>() // 反序列化响应
+
+            val r1 = requestObserver(config)
+            if (r1 != null) return r1
+
+            // 发起请求
+            val httpRes = doRequest(config, params)
+
+
+            val r2 = responseObserver(httpRes)
+            if (r2 != null) return r2
+
+            // 反序列化
+            val resp = httpRes.body<Response<R>>()
+
             return when (resp.code) {
-                0 -> Result.Success(resp.code, resp.message, resp.data) // 成功结果
+                0 -> Result.Success(resp.code, resp.message, resp.data)
                 else -> {
-                    onLog("Business logic error, status:${resp.code}, ${resp.message}")
-                    Result.Error(resp.code, resp.message) // 业务逻辑错误
+                    Result.Error(resp.code, resp.message)
                 }
             }
         } catch (e: Exception) {
             return when (e) {
-                is ClientRequestException -> {
-                    onLog("Client error, status:${e.response.status.value}, ${e.message}")
-                    Result.Error(
-                        e.response.status.value,
-                        "Client error, status:${e.response.status.value}, ${e.message}"
-                    )
-                }
+                is ClientRequestException -> Result.Error(
+                    e.response.status.value,
+                    "Client error, status:${e.response.status.value}, ${e.message}"
+                )
 
-                is ServerResponseException -> {
-                    onLog("Server error, status:${e.response.status.value}, ${e.message}")
-                    Result.Error(
-                        e.response.status.value,
-                        "Server error, status:${e.response.status.value}, ${e.message}"
-                    )
-                }
+                is ServerResponseException -> Result.Error(
+                    e.response.status.value,
+                    "Server error, status:${e.response.status.value}, ${e.message}"
+                )
 
-                is kotlinx.io.IOException -> {
-                    onLog("Network connection failed, ${e.message}")
-                    Result.Error(message = "Network connection failed, ${e.message}")
-                }
+                is kotlinx.io.IOException -> Result.Error(message = "Network connection failed, ${e.message}")
 
-                is SerializationException -> {
-                    onLog("Data parsing failed, ${e.message}")
-                    Result.Error(message = "Data parsing failed, ${e.message}")
-                }
+                is SerializationException -> Result.Error(message = "Data parsing failed, ${e.message}")
 
-                else -> {
-                    onLog("unknown error, ${e.message}")
-                    Result.Error(message = "unknown error, ${e.message},${e.cause}")
-                }
+                else -> Result.Error(message = "Unknown error, ${e.message},${e.cause}")
             }
         }
     }
@@ -251,40 +268,98 @@ class ApiHttpClient(
      * @return HTTP 响应
      */
     suspend inline fun <reified T> doRequest(config: ApiConfig, params: T?): HttpResponse {
-        return httpClient.client.request {
-            method = config.method // 设置 HTTP 方法
-            headers {
-                append(HttpHeaders.Accept, "application/json") // 设置 Accept 头
-                if (config.auth) append(HttpHeaders.Authorization, getToken()) // 设置认证头
-            }
-            url {
-                path(config.path) // 设置请求路径
-                when (config.method) {
-                    HttpMethod.Get, HttpMethod.Delete -> parameters {
-                        params?.toQueryParams()?.forEach { (key, value) ->
-                            when (value) {
-                                null -> return@forEach // 忽略 null 值
-                                is List<*> -> {
-                                    value.forEach { item ->
-                                        parameter(key, item.toString())
-                                    }
-                                }
-                                else -> parameter(key, value)
-                            }
-                        }
+        return httpClient.request {
+            method = config.method
+            if (config.headers.isNotEmpty()) {
+                headers {
+                    config.headers.forEach {
+                        append(it.key, it.value)
                     }
-                    else -> { } // 对于 POST, PUT 等方法，参数已经在 body 中处理
                 }
             }
 
-            when (config.method) {
-                HttpMethod.Post, HttpMethod.Put -> {
-                    contentType(ContentType.Application.Json) // 设置 Content-Type
-                    params?.let {
-                        setBody(params) // 设置请求体
+            url {
+                takeFrom(config.url)
+                if (config.method == HttpMethod.Get || config.method == HttpMethod.Delete) {
+                    params?.toQueryParams()?.forEach { (key, value) ->
+                        when (value) {
+                            is List<*> -> {
+                                value.forEach { item ->
+                                    parameter(key, item.toString())
+                                }
+                            }
+
+                            null -> return@forEach
+                            else -> parameter(key, value)
+                        }
                     }
                 }
-                else -> {}         // GET, DELETE 等方法不需要设置 body
+            }
+
+            if (config.method == HttpMethod.Post || config.method == HttpMethod.Post || config.method == HttpMethod.Patch) {
+                params?.let {
+                    setBody(params)
+                }
+            }
+        }
+    }
+}
+
+
+/**
+ * 处理HTTP状态码
+ * @param httpRes HTTP响应
+ * @return 如果需要中断处理则返回Error结果，否则返回null继续处理
+ */
+fun DefaultHandleHttpStatus(httpRes: HttpResponse): Result.Error? {
+    return when (httpRes.status) {
+        HttpStatusCode.OK, HttpStatusCode.Created -> {
+            // 正常情况，继续处理
+            null
+        }
+
+        HttpStatusCode.BadRequest -> {
+            // 客户端请求错误
+            Result.Error(httpRes.status.value, "Bad Request")
+        }
+
+        HttpStatusCode.Unauthorized -> {
+            // 未授权访问
+            Result.Error(httpRes.status.value, "Unauthorized")
+        }
+
+        HttpStatusCode.Forbidden -> {
+            // 访问被禁止
+            Result.Error(httpRes.status.value, "Forbidden")
+        }
+
+        HttpStatusCode.NotFound -> {
+            // 资源未找到
+            Result.Error(httpRes.status.value, "Not Found")
+        }
+
+        HttpStatusCode.InternalServerError -> {
+            // 服务器内部错误
+            Result.Error(httpRes.status.value, "Internal Server Error")
+        }
+
+        HttpStatusCode.BadGateway -> {
+            // 网关错误
+            Result.Error(httpRes.status.value, "Bad Gateway")
+        }
+
+        HttpStatusCode.ServiceUnavailable -> {
+            // 服务不可用
+            Result.Error(httpRes.status.value, "Service Unavailable")
+        }
+
+        else -> {
+            // 其他未处理的状态码
+            if (httpRes.status.value >= 400) {
+                Result.Error(httpRes.status.value, "HTTP Error: ${httpRes.status}")
+            } else {
+                // 对于其他成功的状态码(2xx系列)，继续正常处理
+                null
             }
         }
     }

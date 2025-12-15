@@ -44,6 +44,8 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
         }
+        iosMain.dependencies {
+        }
         commonMain.dependencies {
             implementation(compose.runtime)
             implementation(compose.foundation)
@@ -89,7 +91,6 @@ kotlin {
             implementation(libs.richeditor.compose.coil3)
             // 响应式
             implementation(libs.adaptive)
-
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

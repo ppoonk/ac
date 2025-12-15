@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
@@ -107,7 +106,7 @@ private fun Compact(
             )
         }
     ) {
-        VerticalPager(pageState, userScrollEnabled = false) {
+        HorizontalPager(pageState, userScrollEnabled = false) {
             destinations[it].content.invoke()
         }
     }
@@ -193,7 +192,7 @@ private fun Medium(
             bottomContent()
         }
         // 主内容区域
-        VerticalPager(
+        HorizontalPager(
             state = pageState,
             userScrollEnabled = false,
             modifier = Modifier.weight(1f)

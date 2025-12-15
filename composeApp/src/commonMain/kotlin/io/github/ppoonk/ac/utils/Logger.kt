@@ -14,36 +14,38 @@ object Logger {
         enable = v
     }
 
-    private var logWriterForDisplay: Boolean = false
-    fun logWriterForDisplay(v: Boolean): Unit {
-        logWriterForDisplay = v
-    }
-
     fun setMinSeverity(min: String): Unit {
         kermitLogger.mutableConfig.minSeverity = when (min) {
+            "Info", "info" -> Severity.Info
             "Error", "error" -> Severity.Error
             "Debug", "debug" -> Severity.Debug
             else -> Severity.Error
         }
     }
 
-    fun addLogWriterForDisplay(callback: (String) -> Unit = {}): Unit {
-        logWriterForDisplay(true)
-        kermitLogger.addLogWriter(object : LogWriter() {
-            override fun log(
-                severity: Severity,
-                message: String,
-                tag: String,
-                throwable: Throwable?
-            ) {
-                callback("[$severity][${Clock.System.now()}][$tag]: $message")
-            }
-        })
+    fun displayLog(display: Boolean, callback: (String) -> Unit = {}): Unit {
+        enable = display
+        if (display) {
+            kermitLogger.addLogWriter(object : LogWriter() {
+                override fun log(
+                    severity: Severity,
+                    message: String,
+                    tag: String,
+                    throwable: Throwable?
+                ) {
+                    callback("[$severity][${Clock.System.now()}][$tag]: $message")
+                }
+            })
+        } else {
+            kermitLogger.setLogWriters(platformLogWriter())
+        }
+
     }
 
-    fun defaultLogWriter(): Unit {
-        logWriterForDisplay(false)
-        kermitLogger.setLogWriters(platformLogWriter())
+    fun info(tag: String = "", throwable: Throwable? = null, message: () -> String): Unit {
+        if (enable) {
+            kermitLogger.i(tag, throwable, message)
+        }
     }
 
     fun debug(tag: String = "", throwable: Throwable? = null, message: () -> String): Unit {

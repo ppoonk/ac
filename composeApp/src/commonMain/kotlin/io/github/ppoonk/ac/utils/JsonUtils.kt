@@ -1,5 +1,6 @@
 package io.github.ppoonk.ac.utils
 
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
@@ -122,4 +123,68 @@ fun deepMerge(oldObj: JsonObject, newObj: JsonObject): JsonObject {
     }
 
     return JsonObject(result)
+}
+
+/**
+ * 将JSON字符串解析为指定类型T的对象
+ * @param T 目标类型，必须是可序列化的类型
+ * @return 解析后的对象T
+ */
+inline fun <reified T> String.decode(): T {
+    return myJson.decodeFromString<T>(this)
+}
+
+
+/**
+ * 将可序列化的对象列表编码为JSON字符串
+ * @param T 列表元素的类型，必须标记为@Serializable
+ * @return 序列化后的JSON字符串
+ */
+inline fun <reified T : @Serializable Any> List<T>.encode(): String {
+    return myJson.encodeToString(this)
+}
+
+/**
+ * 更新列表并保持长度限制
+ * @param T 列表元素类型
+ * @param newItem 要添加的新项
+ * @param limit 列表最大长度限制，默认为20
+ * @param duplicateChecker 用于检测重复项的函数
+ * @return 更新后的列表
+ */
+fun <T> MutableList<T>.updateWithLimit(
+    newItem: T,
+    limit: Int = 20,
+    duplicateChecker: (T) -> Boolean
+): MutableList<T> {
+    return this.apply {
+        removeAll(duplicateChecker)
+        add(0, newItem)
+        while (size > limit) removeAt(size - 1)
+    }
+}
+
+/**
+ * 更新列表并保持长度限制（适用于不可变 List）
+ * @param T 列表元素类型
+ * @param newItem 要添加的新项
+ * @param limit 列表最大长度限制，默认为20
+ * @param duplicateChecker 用于检测重复项的函数
+ * @return 更新后的列表
+ */
+fun <T> List<T>.withLimit(
+    newItem: T,
+    limit: Int = 20,
+    duplicateChecker: (T) -> Boolean
+): List<T> {
+    // 过滤掉重复项，并在开头加入新项
+    val filteredList = this.filterNot(duplicateChecker)
+    val newList = listOf(newItem) + filteredList
+
+    // 控制长度不超过 limit
+    return if (newList.size > limit) {
+        newList.take(limit)
+    } else {
+        newList
+    }
 }
