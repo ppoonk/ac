@@ -296,7 +296,7 @@ class ApiHttpClient(
                 }
             }
 
-            if (config.method == HttpMethod.Post || config.method == HttpMethod.Post || config.method == HttpMethod.Patch) {
+            if (config.method == HttpMethod.Post || config.method == HttpMethod.Put || config.method == HttpMethod.Patch) {
                 params?.let {
                     setBody(params)
                 }

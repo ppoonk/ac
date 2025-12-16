@@ -3,6 +3,10 @@ package io.github.ppoonk.ac.utils
 import com.benasher44.uuid.uuid4
 
 object StringUtils {
+    private val letters = ('a'..'z') + ('A'..'Z')  // 大小写字母
+    private val digits = ('1'..'9') // 不包含0
+    private const val punctuation = "!@#$%^&*()_+-=[]{}|;:,.<>?"  // 常用符号
+
     /**
      * 生成一个新的UUID字符串
      *
@@ -14,25 +18,30 @@ object StringUtils {
 
     /**
      * 生成符合密码规则的随机密码
-     * 密码规则：包含字母、数字(不以0开头)和常用符号
+     * 密码规则：必须包含大小写字母、数字(不以0开头)和常用符号
      *
      * @param length 密码长度，默认12位
      * @return 符合规则的随机密码字符串
      */
     fun newRandomPassword(length: Int = 12): String {
-        // 定义字符集
-        val letters = ('a'..'z') + ('A'..'Z')  // 大小写字母
-        val digits = ('1'..'9') // 不包含0，避免开头问题
-        val punctuation = "!@#$%^&*()_+-=[]{}|;:,.<>?"  // 常用符号
-
-        val allChars = letters + digits + punctuation.toList()  // 所有可用字符
-
-        // 生成字符
+        val allChars = letters + digits + punctuation.toList()
         val remainingChars = (1 until length).map {
-            allChars.random()  // 随机选择字符
+            allChars.random()
         }
-
-        return remainingChars.joinToString("")  // 返回生成的密码
+        return remainingChars.joinToString("")
+    }
+    /**
+     * 生成随机字符串（仅包含字母和数字）
+     *
+     * @param length 字符串长度，默认12位
+     * @return 随机字符串
+     */
+    fun newRandomString(length: Int = 12): String {
+        val allChars = letters + digits
+        val remainingChars = (1 until length).map {
+            allChars.random()
+        }
+        return remainingChars.joinToString("")
     }
 }
 

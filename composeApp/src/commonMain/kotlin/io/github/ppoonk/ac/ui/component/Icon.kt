@@ -12,8 +12,10 @@ import compose.icons.FontAwesomeIcons
 import compose.icons.fontawesomeicons.Brands
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.brands.AmazonPay
+import compose.icons.fontawesomeicons.solid.AngleDown
 import compose.icons.fontawesomeicons.solid.AngleLeft
 import compose.icons.fontawesomeicons.solid.AngleRight
+import compose.icons.fontawesomeicons.solid.AngleUp
 import compose.icons.fontawesomeicons.solid.Bars
 import compose.icons.fontawesomeicons.solid.Bug
 import compose.icons.fontawesomeicons.solid.CheckSquare
@@ -71,7 +73,11 @@ fun ACIconSmall(
 }
 
 object ACIconDefault {
-    val Back = FontAwesomeIcons.Solid.AngleLeft
+    val AngleLeft = FontAwesomeIcons.Solid.AngleLeft
+    val AngleRight = FontAwesomeIcons.Solid.AngleRight
+    val AngleUp = FontAwesomeIcons.Solid.AngleUp
+    val AngleDown = FontAwesomeIcons.Solid.AngleDown
+
     val Search = FontAwesomeIcons.Solid.Search
     val DrawerOpen = FontAwesomeIcons.Solid.Bars
     val Plus = FontAwesomeIcons.Solid.Plus
@@ -84,7 +90,7 @@ object ACIconDefault {
     val Sitemap = FontAwesomeIcons.Solid.Sitemap
     val Copy = FontAwesomeIcons.Solid.Copy
     val Check = FontAwesomeIcons.Solid.CheckSquare
-    val AngleRight = FontAwesomeIcons.Solid.AngleRight
+
     val Bug = FontAwesomeIcons.Solid.Bug
     val Shield = FontAwesomeIcons.Solid.ShieldAlt
     val SignOut = FontAwesomeIcons.Solid.SignOutAlt
