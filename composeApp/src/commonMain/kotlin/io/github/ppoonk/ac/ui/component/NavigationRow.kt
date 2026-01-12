@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import io.github.ppoonk.ac.utils.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 
 @Composable
@@ -59,9 +60,9 @@ fun NavigationRow(
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        d.icon?.let { ACIconSmall(it, contentDescription = d.title, tint = color) }
+                        d.icon?.let { ACIconSmall(it, null, tint = color) }
                         Spacer(Modifier.width(8.dp))
-                        d.title?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
+                        d.title?.let { Text(stringResource(it), style = MaterialTheme.typography.titleMedium) }
                     }
                 }
                 if (selected) {

@@ -19,7 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.github.ppoonk.ac.utils.TimeUtils
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 
 @Composable

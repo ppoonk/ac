@@ -4,7 +4,7 @@ import co.touchlab.kermit.LogWriter
 import co.touchlab.kermit.Logger  as KermitLogger
 import co.touchlab.kermit.Severity
 import co.touchlab.kermit.platformLogWriter
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 
 object Logger {
     private val kermitLogger = KermitLogger

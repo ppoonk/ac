@@ -29,11 +29,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 
 abstract class ACDestination {
     abstract val icon: ImageVector?
-    abstract val title: String?
+    abstract val title: StringResource?
     abstract val content: @Composable () -> Unit
 
 }
@@ -137,7 +139,7 @@ private fun CompactDrawerContent(
             itemsIndexed(destinations) { index, d ->
                 NavigationDrawerItem(
                     icon = { d.icon?.let { ACIconSmall(it, contentDescription = null) } },
-                    label = { d.title?.let { Text(it) } },
+                    label = { d.title?.let { Text(stringResource(it)) } },
                     selected = index == pageState.currentPage,
                     onClick = {
                         scope.launch {
@@ -168,14 +170,11 @@ private fun Medium(
 ): Unit {
     val scope = rememberCoroutineScope()
     Row(modifier = Modifier.fillMaxSize()) {
-        NavigationRail() {
-            // top
-            topContent()
-            // menu
+        NavigationRail(header = { topContent() }, modifier = Modifier.padding(horizontal = 16.dp)) {
             destinations.forEachIndexed { index, d ->
                 NavigationRailItem(
                     icon = { d.icon?.let { ACIconSmall(it, contentDescription = null) } },
-                    label = { d.title?.let { Text(it) } },
+                    label = { d.title?.let { Text(stringResource(it)) } },
                     selected = d == destinations[pageState.currentPage],
                     onClick = {
                         scope.launch {
@@ -212,19 +211,20 @@ private fun Expanded(
 ): Unit {
     val scope = rememberCoroutineScope()
     Row(modifier = Modifier.fillMaxSize()) {
-        NavigationRail(modifier = Modifier.widthIn(max = 200.dp)) {
-            topContent()
+        NavigationRail(
+            header = { topContent() },
+            modifier = Modifier.padding(horizontal = 16.dp).widthIn(max = 200.dp)
+        ) {
             destinations.forEachIndexed { index, d ->
                 NavigationRailItem(
                     icon = {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
-
-                            ) {
-                            d.icon?.let { ACIconSmall(it, contentDescription = d.title) }
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            d.icon?.let { ACIconSmall(it, contentDescription = null) }
                             Spacer(Modifier.width(16.dp))
-                            d.title?.let { Text(it) }
+                            d.title?.let { Text(stringResource(it)) }
                         }
                     },
                     selected = d == destinations[pageState.currentPage],
@@ -236,6 +236,7 @@ private fun Expanded(
                             )
                         }
                     },
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 )
             }
             Spacer(modifier = Modifier.weight(1f))

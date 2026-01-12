@@ -28,6 +28,7 @@ import compose.icons.fontawesomeicons.solid.Gift
 import compose.icons.fontawesomeicons.solid.Home
 import compose.icons.fontawesomeicons.solid.InfoCircle
 import compose.icons.fontawesomeicons.solid.Lock
+import compose.icons.fontawesomeicons.solid.Moon
 import compose.icons.fontawesomeicons.solid.Plus
 import compose.icons.fontawesomeicons.solid.Search
 import compose.icons.fontawesomeicons.solid.Server
@@ -36,6 +37,7 @@ import compose.icons.fontawesomeicons.solid.ShoppingCart
 import compose.icons.fontawesomeicons.solid.SignOutAlt
 import compose.icons.fontawesomeicons.solid.Sitemap
 import compose.icons.fontawesomeicons.solid.Sort
+import compose.icons.fontawesomeicons.solid.Sun
 import compose.icons.fontawesomeicons.solid.SyncAlt
 import compose.icons.fontawesomeicons.solid.TicketAlt
 import compose.icons.fontawesomeicons.solid.TrashAlt
@@ -104,4 +106,7 @@ object ACIconDefault {
     val Email = FontAwesomeIcons.Solid.Envelope
     val Pay = FontAwesomeIcons.Brands.AmazonPay
     val Info = FontAwesomeIcons.Solid.InfoCircle
+
+    val Moon = FontAwesomeIcons.Solid.Moon
+    val Sun = FontAwesomeIcons.Solid.Sun
 }
